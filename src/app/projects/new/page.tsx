@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppShell } from "@/components/layout/app-shell";
-import { WizardStepper } from "@/components/wizard-stepper";
+import { WizardShell } from "@/components/wizard/wizard-shell";
 import {
   finishWizardAction,
   generateClickUpAction,
@@ -16,7 +16,7 @@ import { buildClickUpPreview } from "@/lib/domain/clickup-mapper";
 import { getDb } from "@/lib/data/store";
 import { BtnLink } from "@/components/btn-link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +32,7 @@ import {
 export default async function NewProjectPage({
   searchParams,
 }: {
-  searchParams: Promise<{ projectId?: string; step?: string }>;
+  searchParams: Promise<{ projectId?: string; step?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const db = await getDb();
@@ -65,17 +65,13 @@ export default async function NewProjectPage({
 
   return (
     <AppShell title={`Project Baru — ${project.name}`}>
-      <WizardStepper current={step} />
-      <BtnLink href="/portfolio" variant="ghost" className="mb-4">
-        Batal & kembali ke Portfolio
-      </BtnLink>
-
+      <WizardShell step={step} projectId={project.id} projectName={project.name}>
       {step === 1 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Input SPH (Surat Penawaran Harga)</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             <form action={saveSphStepAction} className="grid max-w-2xl gap-4">
               <input type="hidden" name="projectId" value={project.id} />
               <div>
@@ -126,15 +122,15 @@ export default async function NewProjectPage({
               <Button type="submit">Simpan & Buat Baseline Draft</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 2 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="space-y-6 p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Baseline Draft</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 px-0 pb-0">
             <form action={saveBaselineDraftAction} className="grid max-w-3xl gap-4">
               <input type="hidden" name="projectId" value={project.id} />
               <div className="grid grid-cols-2 gap-4">
@@ -209,15 +205,15 @@ export default async function NewProjectPage({
               <Button type="submit">Lanjut ke Pre-Kick Off</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 3 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="space-y-4 p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Paket Pre-Kick Off</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-0 pb-0">
             <div className="flex gap-4">
               <BtnLink href={`/api/export?type=scheduler&projectId=${project.id}`} variant="secondary">
                 Unduh Excel Scheduler
@@ -235,15 +231,15 @@ export default async function NewProjectPage({
               <Button type="submit">Lanjut ke Kick Off</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 4 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Kick Off</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             <form action={saveKickoffAction} className="grid max-w-md gap-4">
               <input type="hidden" name="projectId" value={project.id} />
               <div>
@@ -257,15 +253,24 @@ export default async function NewProjectPage({
               <Button type="submit">Lanjut ke Konfirmasi ClickUp</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 5 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="space-y-4 p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Generate ClickUp — Preview</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-0 pb-0">
+            {params.error === "clickup_config" && (
+              <p className="rounded-lg border border-[var(--pdcc-danger-fg)]/30 bg-red-50 px-3 py-2 text-sm text-[var(--pdcc-danger-fg)]">
+                Konfigurasi ClickUp belum lengkap. Isi API token dan Space ID di{" "}
+                <Link href="/settings/integrations" className="font-medium underline">
+                  Settings → Integrasi
+                </Link>
+                .
+              </p>
+            )}
             <p className="text-sm text-[var(--pdcc-muted)]">
               Baseline 0 terkunci — langkah internal, tidak dikirim ke pelanggan.
             </p>
@@ -289,15 +294,15 @@ export default async function NewProjectPage({
               <Button type="submit">Generate ClickUp</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 6 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Termin Pembayaran</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             <p className="mb-4 text-sm text-[var(--pdcc-muted)]">
               Diisi otomatis 25% Kick Off, 50% UAT, 25% Go Live dari nilai SPH.
             </p>
@@ -306,15 +311,15 @@ export default async function NewProjectPage({
               <Button type="submit">Lanjut ke Pengaturan Weekly Report</Button>
             </form>
           </CardContent>
-        </Card>
+        </div>
       )}
 
       {step === 7 && (
-        <Card className="border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
-          <CardHeader>
+        <div className="p-6">
+          <CardHeader className="px-0 pt-0">
             <CardTitle>Jadwal Weekly Report</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0 pb-0">
             <form action={finishWizardAction} className="grid max-w-lg gap-4">
               <input type="hidden" name="projectId" value={project.id} />
               <div>
@@ -346,8 +351,9 @@ export default async function NewProjectPage({
               </form>
             </div>
           </CardContent>
-        </Card>
+        </div>
       )}
+      </WizardShell>
     </AppShell>
   );
 }

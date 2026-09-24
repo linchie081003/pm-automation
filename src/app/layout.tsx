@@ -16,6 +16,8 @@ const sora = Sora({
   display: "swap",
 });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Project Delivery Control Center",
   description: "PDCC — delivery portfolio, baseline, ClickUp sync, weekly report",

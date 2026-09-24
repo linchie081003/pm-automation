@@ -2,7 +2,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { PdccCard } from "@/components/pdcc-card";
 import { RagBadge } from "@/components/rag-badge";
-import { createProjectAction } from "@/lib/actions/projects";
+import { createProjectAction, setActiveProjectAction } from "@/lib/actions/projects";
 import { getDb } from "@/lib/data/store";
 import { BtnLink } from "@/components/btn-link";
 import { Button } from "@/components/ui/button";
@@ -91,9 +91,12 @@ export default async function PortfolioPage() {
                     {p.nextMilestone ?? "—"}
                   </TableCell>
                   <TableCell>
-                    <BtnLink href={`/projects/${p.id}/dashboard`} size="sm" variant="outline">
-                      Buka
-                    </BtnLink>
+                    <form action={setActiveProjectAction}>
+                      <input type="hidden" name="projectId" value={p.id} />
+                      <Button type="submit" size="sm" variant="outline">
+                        Buka
+                      </Button>
+                    </form>
                   </TableCell>
                 </TableRow>
               );

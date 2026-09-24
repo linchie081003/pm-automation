@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { schedulePhases } from "@/lib/domain/scheduler-engine";
 import { computeGapSideA, computeGapSideB } from "@/lib/domain/gap-analysis";
 import { buildClickUpPreview, createClickUpStructure } from "@/lib/domain/clickup-mapper";
+import { resolveClickUpConfig } from "@/lib/integrations/clickup-config";
 import { getDb, newId, saveDb } from "@/lib/data/store";
 import type { Project, ProjectPhase, ProjectTask } from "@/lib/types";
 
@@ -209,11 +210,16 @@ export async function generateClickUpAction(formData: FormData) {
     (t) => t.projectId === projectId && t.baselineId === project.activeBaselineId,
   );
   const preview = buildClickUpPreview(project.name, phases, tasks);
-  const token = process.env.CLICKUP_API_TOKEN;
+  const clickup = await resolveClickUpConfig();
+  if (!clickup.apiToken || !clickup.spaceId) {
+    redirect(
+      `/projects/new?projectId=${projectId}&step=5&error=clickup_config`,
+    );
+  }
   const { folderId } = await createClickUpStructure(
-    token,
+    clickup.apiToken,
     preview,
-    process.env.CLICKUP_SPACE_ID,
+    clickup.spaceId,
   );
   project.clickupFolderId = folderId;
   project.clickupFolderName = preview.folderName;
@@ -287,9 +293,31 @@ export async function finishWizardAction(formData: FormData) {
   redirect(`/projects/${projectId}/dashboard`);
 }
 
-export async function setActiveProjectAction(projectId: string) {
+export async function setActiveProjectAction(formData: FormData) {
+  const projectId = String(formData.get("projectId"));
   const db = await getDb();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project) return;
   db.activeProjectId = projectId;
   await saveDb(db);
-  revalidatePath("/");
+  // #region agent log
+  fetch("http://127.0.0.1:7879/ingest/af1f273b-afa0-4ebf-a265-d1a5fdd00f6f", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "df436c",
+    },
+    body: JSON.stringify({
+      sessionId: "df436c",
+      location: "projects.ts:setActiveProjectAction",
+      message: "active project switched via server action",
+      data: { projectId },
+      timestamp: Date.now(),
+      hypothesisId: "H-SWITCH",
+      runId: "post-fix",
+    }),
+  }).catch(() => {});
+  // #endregion
+  revalidatePath("/", "layout");
+  redirect(`/projects/${projectId}/dashboard`);
 }

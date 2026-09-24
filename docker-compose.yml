@@ -1,0 +1,17 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pdcc-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pdcc
+      POSTGRES_PASSWORD: pdcc
+      POSTGRES_DB: pdcc
+    ports:
+      # 5433 avoids conflict with PostgreSQL already installed on Windows (often :5432)
+      - "5433:5432"
+    volumes:
+      - pdcc_pg_data:/var/lib/postgresql/data
+
+volumes:
+  pdcc_pg_data:

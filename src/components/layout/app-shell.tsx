@@ -5,6 +5,7 @@ import {
   SidebarNav,
   type NavIconKey,
 } from "@/components/layout/sidebar-nav";
+import { ProjectSwitcher } from "@/components/layout/project-switcher";
 import { getDb } from "@/lib/data/store";
 import { logoutAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -77,18 +78,23 @@ export async function AppShell({
           <SidebarNav items={navItems} />
         </div>
 
-        {activeProject && (
-          <div className="mx-3 mb-3 rounded-lg border border-slate-600/60 bg-slate-800/80 p-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--pdcc-muted-light)]">
-              Project Aktif
-            </p>
-            <p className="mt-1 text-sm font-semibold leading-snug text-white">
-              {activeProject.name}
-            </p>
-            <p className="mt-0.5 text-xs text-slate-400">
-              {activeProject.customerName}
-              {activeProject.sphNumber ? ` • ${activeProject.sphNumber.split("-").slice(-2).join("-")}` : ""}
-            </p>
+        {activeId && db.projects.length > 0 && (
+          <div className="mx-3 mb-3 space-y-3 rounded-lg border border-slate-600/60 bg-slate-800/80 p-3">
+            <ProjectSwitcher
+              activeId={activeId}
+              projects={db.projects.map((p) => ({
+                id: p.id,
+                name: p.name,
+                customerName: p.customerName,
+              }))}
+            />
+            {activeProject && (
+              <p className="text-xs text-slate-400">
+                {activeProject.sphNumber
+                  ? `SPH ${activeProject.sphNumber.split("-").slice(-2).join("-")}`
+                  : "Belum ada SPH"}
+              </p>
+            )}
           </div>
         )}
 

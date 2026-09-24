@@ -1,39 +1,55 @@
-import { promises as fs } from "fs";
-import path from "path";
+import {
+  loadApplicationState,
+  persistApplicationState,
+} from "@/backend/repositories/pdcc-repository";
 import type { PdccDatabase } from "@/lib/types";
-import { createSeedDatabase } from "@/lib/data/seed";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const DATA_FILE = path.join(DATA_DIR, "pdcc.json");
-
-let memoryStore: PdccDatabase | null = null;
-
-async function ensureDataFile(): Promise<PdccDatabase> {
-  if (memoryStore) return memoryStore;
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    const raw = await fs.readFile(DATA_FILE, "utf-8");
-    memoryStore = JSON.parse(raw) as PdccDatabase;
-    return memoryStore;
-  } catch {
-    const seed = createSeedDatabase();
-    memoryStore = seed;
-    await fs.writeFile(DATA_FILE, JSON.stringify(seed, null, 2), "utf-8");
-    return seed;
-  }
-}
 
 export async function getDb(): Promise<PdccDatabase> {
-  if (process.env.PDCC_DEMO_MODE === "false") {
-    // still json until supabase repo wired for all entities
-  }
-  return ensureDataFile();
+  const db = await loadApplicationState();
+  // #region agent log
+  fetch("http://127.0.0.1:7879/ingest/af1f273b-afa0-4ebf-a265-d1a5fdd00f6f", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "df436c",
+    },
+    body: JSON.stringify({
+      sessionId: "df436c",
+      location: "store.ts:getDb",
+      message: "load state from postgres",
+      data: {
+        projectCount: db.projects.length,
+        activeProjectId: db.activeProjectId ?? null,
+      },
+      timestamp: Date.now(),
+      hypothesisId: "H-DB",
+      runId: "post-fix",
+    }),
+  }).catch(() => {});
+  // #endregion
+  return db;
 }
 
 export async function saveDb(db: PdccDatabase): Promise<void> {
-  memoryStore = db;
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(DATA_FILE, JSON.stringify(db, null, 2), "utf-8");
+  await persistApplicationState(db);
+  // #region agent log
+  fetch("http://127.0.0.1:7879/ingest/af1f273b-afa0-4ebf-a265-d1a5fdd00f6f", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "df436c",
+    },
+    body: JSON.stringify({
+      sessionId: "df436c",
+      location: "store.ts:saveDb",
+      message: "persist state to postgres",
+      data: { activeProjectId: db.activeProjectId ?? null },
+      timestamp: Date.now(),
+      hypothesisId: "H-DB",
+      runId: "post-fix",
+    }),
+  }).catch(() => {});
+  // #endregion
 }
 
 export function newId(prefix: string): string {
