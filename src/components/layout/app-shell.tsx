@@ -24,7 +24,7 @@ const navConfig: {
   { key: "/documents", label: "Dokumen", iconKey: "file-text", project: true },
   { key: "/budget", label: "Budget", iconKey: "wallet", project: true },
   { key: "/weekly-report", label: "Weekly Report", iconKey: "calendar-range", project: true },
-  { key: "/settings/templates", label: "Settings", iconKey: "settings" },
+  { key: "/settings/users", label: "Settings", iconKey: "settings" },
 ];
 
 export async function AppShell({
@@ -78,23 +78,20 @@ export async function AppShell({
           <SidebarNav items={navItems} />
         </div>
 
-        {activeId && db.projects.length > 0 && (
-          <div className="mx-3 mb-3 space-y-3 rounded-lg border border-slate-600/60 bg-slate-800/80 p-3">
-            <ProjectSwitcher
-              activeId={activeId}
-              projects={db.projects.map((p) => ({
-                id: p.id,
-                name: p.name,
-                customerName: p.customerName,
-              }))}
-            />
-            {activeProject && (
-              <p className="text-xs text-slate-400">
-                {activeProject.sphNumber
-                  ? `SPH ${activeProject.sphNumber.split("-").slice(-2).join("-")}`
-                  : "Belum ada SPH"}
-              </p>
-            )}
+        {activeProject && (
+          <div className="mx-3 mb-3 rounded-lg border border-slate-600/60 bg-slate-800/80 p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--pdcc-muted-light)]">
+              Project aktif
+            </p>
+            <p className="mt-1 text-sm font-semibold leading-snug text-white">
+              {activeProject.name}
+            </p>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {activeProject.customerName}
+              {activeProject.sphNumber
+                ? ` • SPH ${activeProject.sphNumber.split("-").slice(-2).join("-")}`
+                : ""}
+            </p>
           </div>
         )}
 
@@ -120,16 +117,19 @@ export async function AppShell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] px-8 py-3">
-          <p className="text-sm text-[var(--pdcc-muted)]">
-            {activeProject ? (
-              <>
-                Project{" "}
-                <span className="font-medium text-[var(--pdcc-title)]">{activeProject.name}</span>
-              </>
-            ) : (
-              "Portfolio"
-            )}
-          </p>
+          {db.projects.length > 0 ? (
+            <ProjectSwitcher
+              variant="header"
+              activeId={activeId ?? db.projects[0].id}
+              projects={db.projects.map((p) => ({
+                id: p.id,
+                name: p.name,
+                customerName: p.customerName,
+              }))}
+            />
+          ) : (
+            <p className="text-sm text-[var(--pdcc-muted)]">Portfolio</p>
+          )}
           <Link
             href="/notifications"
             className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-[var(--pdcc-muted)] hover:bg-[var(--pdcc-border-light)]"

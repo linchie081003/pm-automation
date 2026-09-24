@@ -1,5 +1,8 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { saveProjectClickUpIntegrationAction } from "@/lib/actions/integrations";
 import { syncClickUpFormAction } from "@/lib/actions/operations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { loadProject } from "@/lib/project-page";
 import { BtnLink } from "@/components/btn-link";
 import { Button } from "@/components/ui/button";
@@ -25,6 +28,41 @@ export default async function ClickUpPage({
 
   return (
     <AppShell title="ClickUp Sync">
+      <Card className="mb-6 border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
+        <CardHeader>
+          <CardTitle>Integrasi ClickUp (per project)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form action={saveProjectClickUpIntegrationAction} className="max-w-xl space-y-4">
+            <input type="hidden" name="projectId" value={id} />
+            <p className="text-sm text-[var(--pdcc-muted)]">
+              Token dan Space khusus project ini. Jika kosong, dipakai fallback Settings → Integrasi.
+            </p>
+            <div>
+              <Label htmlFor="clickupApiToken">API Token</Label>
+              <Input
+                id="clickupApiToken"
+                name="clickupApiToken"
+                type="password"
+                placeholder={project.clickupApiToken ? "•••••••• (isi untuk ganti)" : "Opsional"}
+              />
+            </div>
+            <div>
+              <Label htmlFor="clickupWorkspaceId">Workspace ID</Label>
+              <Input
+                id="clickupWorkspaceId"
+                name="clickupWorkspaceId"
+                defaultValue={project.clickupWorkspaceId ?? ""}
+              />
+            </div>
+            <div>
+              <Label htmlFor="clickupSpaceId">Space ID</Label>
+              <Input id="clickupSpaceId" name="clickupSpaceId" defaultValue={project.clickupSpaceId ?? ""} />
+            </div>
+            <Button type="submit">Simpan integrasi project</Button>
+          </form>
+        </CardContent>
+      </Card>
       <Card className="mb-6 border-[var(--pdcc-border)] bg-[var(--pdcc-surface)] shadow-sm">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 pt-6">
           <div>

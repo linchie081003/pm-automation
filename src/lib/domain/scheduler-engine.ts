@@ -1,6 +1,16 @@
-import { addDays, format, isSaturday, isSunday, parseISO } from "date-fns";
+import { addDays, format, isSaturday, isSunday, isValid, parseISO } from "date-fns";
+
+/** Parse YYYY-MM-DD (or ISO prefix) for scheduling; returns null if invalid. */
+export function parseCalendarDate(value: string | undefined | null): Date | null {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  const d = parseISO(/^\d{4}-\d{2}-\d{2}$/.test(s) ? s : s.slice(0, 10));
+  return isValid(d) ? d : null;
+}
 
 function isHoliday(date: Date, holidays: string[]): boolean {
+  if (!isValid(date)) return false;
   const key = format(date, "yyyy-MM-dd");
   return holidays.includes(key);
 }
@@ -16,7 +26,11 @@ export function addWorkingDays(
   workingDays: number,
   holidays: string[] = [],
 ): { start: string; end: string } {
-  let current = parseISO(startDate);
+  const parsedStart = parseCalendarDate(startDate);
+  if (!parsedStart) {
+    throw new Error(`Tanggal mulai tidak valid: "${startDate}". Isi estimasi mulai project (YYYY-MM-DD).`);
+  }
+  let current = parsedStart;
   while (!isWorkingDay(current, holidays)) {
     current = addDays(current, 1);
   }
@@ -41,9 +55,17 @@ export function schedulePhases(
   let cursor = plannedStart;
   const result: { phaseId: string; startDate: string; endDate: string }[] = [];
   for (const phase of sorted) {
-    const { start, end } = addWorkingDays(cursor, phase.durationDays, holidays);
+    const days = Number(phase.durationDays);
+    if (!Number.isFinite(days) || days <= 0) {
+      throw new Error(`Durasi fase "${phase.name}" harus lebih dari 0 hari kerja.`);
+    }
+    const { start, end } = addWorkingDays(cursor, days, holidays);
     result.push({ phaseId: phase.id, startDate: start, endDate: end });
-    cursor = format(addDays(parseISO(end), 1), "yyyy-MM-dd");
+    const afterEnd = parseCalendarDate(end);
+    if (!afterEnd) {
+      throw new Error(`Jadwal fase "${phase.name}" gagal dihitung — periksa tanggal mulai project.`);
+    }
+    cursor = format(addDays(afterEnd, 1), "yyyy-MM-dd");
   }
   return result;
 }
@@ -53,8 +75,10 @@ export function totalWorkingDaysBetween(
   end: string,
   holidays: string[] = [],
 ): number {
-  let current = parseISO(start);
-  const endDate = parseISO(end);
+  const startParsed = parseCalendarDate(start);
+  const endDate = parseCalendarDate(end);
+  if (!startParsed || !endDate) return 0;
+  let current = startParsed;
   let count = 0;
   while (current <= endDate) {
     if (isWorkingDay(current, holidays)) count += 1;

@@ -2,22 +2,22 @@ import { AppShell } from "@/components/layout/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { SettingsNav } from "@/components/settings-nav";
 import { saveClickUpIntegrationAction } from "@/lib/actions/integrations";
-import { loadIntegrations } from "@/backend/repositories/pdcc-repository";
 import { getDb } from "@/lib/data/store";
+import { apiLoadIntegrations } from "@/lib/pdcc-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default async function IntegrationsSettingsPage() {
   const db = await getDb();
-  const config = await loadIntegrations(db.organization.id);
+  const config = await apiLoadIntegrations(db.organization.id);
 
   return (
     <AppShell title="Integrasi">
       <PageHeader
         eyebrow="Settings"
         title="Integrasi ClickUp"
-        subtitle="Token dan workspace disimpan di PostgreSQL (bukan file JSON)."
+        subtitle="Fallback organisasi jika project belum punya token/Space sendiri (ClickUp Sync → per project)."
       />
       <SettingsNav active="/settings/integrations" />
 
@@ -32,7 +32,11 @@ export default async function IntegrationsSettingsPage() {
             name="clickupApiToken"
             type="password"
             autoComplete="off"
-            placeholder={config.clickupApiToken ? "•••••••• (tersimpan — kosongkan untuk tidak mengubah)" : "pk_..."}
+            placeholder={
+              config.hasClickUpToken
+                ? "•••••••• (tersimpan — kosongkan untuk tidak mengubah)"
+                : "pk_..."
+            }
           />
           <p className="mt-1 text-xs text-[var(--pdcc-muted)]">
             Buat token di ClickUp → Settings → Apps. Nilai tidak ditampilkan ulang setelah disimpan.
@@ -60,7 +64,7 @@ export default async function IntegrationsSettingsPage() {
       </form>
 
       <p className="mt-4 max-w-xl text-xs text-[var(--pdcc-muted)]">
-        REST API: <code className="text-[var(--pdcc-body)]">GET/PUT /api/v1/settings/integrations</code>
+        Backend API: <code className="text-[var(--pdcc-body)]">http://127.0.0.1:4000/api/v1/settings/integrations</code>
       </p>
     </AppShell>
   );

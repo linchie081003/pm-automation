@@ -219,6 +219,7 @@ export function createSeedDatabase(): PdccDatabase {
         name: "Custom Application — Agile",
         projectType: "Custom Application",
         methodology: "Agile",
+        isActive: true,
         phases: templatePhases,
       },
     ],

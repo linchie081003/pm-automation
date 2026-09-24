@@ -1,16 +1,29 @@
-import { loadIntegrations } from "@/backend/repositories/pdcc-repository";
 import { getDb } from "@/lib/data/store";
+import { apiLoadIntegrations } from "@/lib/pdcc-api";
 
 export interface ClickUpRuntimeConfig {
   apiToken?: string;
   workspaceId?: string;
   spaceId?: string;
-  source: "database" | "env" | "none";
+  source: "project" | "database" | "env" | "none";
 }
 
-export async function resolveClickUpConfig(): Promise<ClickUpRuntimeConfig> {
+export async function resolveClickUpConfig(projectId?: string): Promise<ClickUpRuntimeConfig> {
   const db = await getDb();
-  const fromDb = await loadIntegrations(db.organization.id);
+
+  if (projectId) {
+    const project = db.projects.find((p) => p.id === projectId);
+    if (project?.clickupApiToken?.trim()) {
+      return {
+        apiToken: project.clickupApiToken.trim(),
+        workspaceId: project.clickupWorkspaceId?.trim(),
+        spaceId: project.clickupSpaceId?.trim(),
+        source: "project",
+      };
+    }
+  }
+
+  const fromDb = await apiLoadIntegrations(db.organization.id);
   if (fromDb.clickupApiToken?.trim()) {
     return {
       apiToken: fromDb.clickupApiToken.trim(),

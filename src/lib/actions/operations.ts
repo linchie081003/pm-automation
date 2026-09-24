@@ -85,16 +85,115 @@ export async function approveTaskAdditionAction(additionId: string) {
   revalidatePath(`/projects/${add.projectId}/task-recap`);
 }
 
-export async function toggleClosingFormAction(formData: FormData) {
-  await toggleClosingItemAction(String(formData.get("itemId")));
+export async function addClosingChecklistItemAction(formData: FormData) {
+  const projectId = String(formData.get("projectId"));
+  const label = String(formData.get("label") ?? "").trim();
+  if (!label) return;
+  const db = await getDb();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project || project.status === "completed") return;
+
+  const id = newId("close");
+  db.closingChecklist.push({
+    id,
+    projectId,
+    itemKey: `custom_${id}`,
+    label,
+    completed: false,
+  });
+  await saveDb(db);
+  revalidatePath(`/projects/${projectId}/closing`);
 }
 
-export async function toggleClosingItemAction(itemId: string) {
+export async function removeClosingChecklistItemAction(formData: FormData) {
+  const projectId = String(formData.get("projectId"));
+  const itemId = String(formData.get("itemId"));
   const db = await getDb();
-  const item = db.closingChecklist.find((c) => c.id === itemId);
-  if (item) item.completed = !item.completed;
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project || project.status === "completed") return;
+
+  db.closingChecklist = db.closingChecklist.filter(
+    (c) => !(c.id === itemId && c.projectId === projectId),
+  );
   await saveDb(db);
-  revalidatePath(`/projects/${item?.projectId}/closing`);
+  revalidatePath(`/projects/${projectId}/closing`);
+}
+
+export async function seedClosingChecklistTemplateAction(formData: FormData) {
+  const projectId = String(formData.get("projectId"));
+  const db = await getDb();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project || project.status === "completed") return;
+
+  const { defaultClosingChecklistForProject } = await import("@/lib/domain/closing-checklist");
+  const existingKeys = new Set(
+    db.closingChecklist.filter((c) => c.projectId === projectId).map((c) => c.itemKey),
+  );
+  const seeds = defaultClosingChecklistForProject(projectId, newId).filter(
+    (s) => !existingKeys.has(s.itemKey),
+  );
+  db.closingChecklist.push(...seeds);
+  await saveDb(db);
+  revalidatePath(`/projects/${projectId}/closing`);
+}
+
+export async function markClosingItemCompleteAction(itemId: string, projectId: string) {
+  const db = await getDb();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project || project.status === "completed") return;
+
+  const item = db.closingChecklist.find((c) => c.id === itemId && c.projectId === projectId);
+  if (!item || item.completed) return;
+
+  item.completed = true;
+  await saveDb(db);
+  revalidatePath(`/projects/${projectId}/closing`);
+}
+
+export async function submitProjectClosingFormAction(formData: FormData) {
+  await submitProjectClosingAction(String(formData.get("projectId")));
+}
+
+export async function submitProjectClosingAction(projectId: string) {
+  const db = await getDb();
+  const project = db.projects.find((p) => p.id === projectId);
+  if (!project) {
+    throw new Error("Project tidak ditemukan");
+  }
+  if (project.status === "completed") {
+    return;
+  }
+
+  const items = db.closingChecklist.filter((c) => c.projectId === projectId);
+  if (items.length === 0) {
+    throw new Error("Tambahkan checklist closing untuk project ini terlebih dahulu.");
+  }
+  const allDone = items.every((i) => i.completed);
+  // #region agent log
+  fetch("http://127.0.0.1:7879/ingest/af1f273b-afa0-4ebf-a265-d1a5fdd00f6f", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "df436c" },
+    body: JSON.stringify({
+      sessionId: "df436c",
+      runId: "closing-flow",
+      hypothesisId: "C2",
+      location: "operations.ts:submitProjectClosingAction",
+      message: "Ajukan closing",
+      data: { projectId, itemCount: items.length, allDone, statusBefore: project.status },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  if (!allDone) {
+    throw new Error("Checklist closing belum lengkap — centang semua item terlebih dahulu.");
+  }
+
+  project.status = "completed";
+  await saveDb(db);
+  revalidatePath("/portfolio");
+  revalidatePath("/", "layout");
+  revalidatePath(`/projects/${projectId}/closing`);
 }
 
 export async function markReadFormAction(formData: FormData) {

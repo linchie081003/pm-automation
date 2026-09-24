@@ -1,5 +1,8 @@
+import { cancelWizardFormAction } from "@/lib/actions/form-actions";
+import { ServerActionForm } from "@/components/form/server-action-form";
 import { WizardStepper } from "@/components/wizard-stepper";
 import { BtnLink } from "@/components/btn-link";
+import { Button } from "@/components/ui/button";
 
 const STEP_TITLES = [
   "Input SPH",
@@ -13,12 +16,12 @@ const STEP_TITLES = [
 
 export function WizardShell({
   step,
-  projectId,
+  draftId,
   projectName,
   children,
 }: {
   step: number;
-  projectId: string;
+  draftId: string;
   projectName: string;
   children: React.ReactNode;
 }) {
@@ -37,10 +40,16 @@ export function WizardShell({
           <p className="mt-1 text-sm text-[var(--pdcc-muted)]">
             {projectName} • Langkah {step} dari 7
           </p>
+          <p className="mt-1 text-xs text-[var(--pdcc-muted-light)]">
+            Draft wizard — belum masuk portfolio sampai langkah 7 selesai.
+          </p>
         </div>
-        <BtnLink href="/portfolio" variant="outline" size="sm">
-          Batal ke Portfolio
-        </BtnLink>
+        <ServerActionForm action={cancelWizardFormAction}>
+          <input type="hidden" name="draftId" value={draftId} />
+          <Button type="submit" variant="outline" size="sm">
+            Batal (buang draft)
+          </Button>
+        </ServerActionForm>
       </div>
 
       <WizardStepper current={step} />
@@ -52,7 +61,7 @@ export function WizardShell({
       <div className="mt-6 flex items-center justify-between gap-4">
         {prevStep ? (
           <BtnLink
-            href={`/projects/new?projectId=${projectId}&step=${prevStep}`}
+            href={`/projects/new?draftId=${draftId}&step=${prevStep}`}
             variant="outline"
           >
             ← Kembali ke langkah {prevStep}
@@ -61,7 +70,7 @@ export function WizardShell({
           <span />
         )}
         <p className="text-xs text-[var(--pdcc-muted)]">
-          Data tersimpan di database — navigasi mundur tidak menghapus isian.
+          Isian disimpan sementara di draft wizard, bukan di portfolio.
         </p>
       </div>
     </div>

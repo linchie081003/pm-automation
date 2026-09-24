@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node scripts/ensure-port-free.mjs 4000 && node scripts/ensure-next-dev-unlocked.mjs && concurrently -n api,web -c green,blue \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:web": "node scripts/wait-pdcc-api-ready.mjs && next dev",
+    "dev:api": "npm run dev --prefix backend",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "npx tsx scripts/seed.ts",
     "db:up": "docker compose up -d",
-    "db:setup": "npx tsx scripts/setup-postgres.ts",
-    "db:seed": "npm run seed"
+    "db:setup": "npm run db:setup --prefix backend",
+    "db:seed": "npm run db:seed --prefix backend",
+    "db:reset": "npm run db:reset --prefix backend"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -19,11 +21,11 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cn": "^0.4.0",
+    "concurrently": "^9.1.2",
     "date-fns": "^4.4.0",
     "exceljs": "^4.4.0",
     "lucide-react": "^1.47.0",
     "next": "16.3.6",
-    "pg": "^8.23.0",
     "pptxgenjs": "^4.0.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -35,13 +37,13 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
-    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.1"
   }
 }

@@ -1,4 +1,5 @@
-import { loginAction } from "@/lib/actions/auth";
+import { loginFormAction } from "@/lib/actions/form-actions";
+import { ServerActionForm } from "@/components/form/server-action-form";
 import { getDb } from "@/lib/data/store";
 import { PdccCard } from "@/components/pdcc-card";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ export default async function LoginPage({
               Email tidak ditemukan.
             </p>
           )}
-          <form action={loginAction} className="mt-6 space-y-4">
+          <ServerActionForm action={loginFormAction} className="mt-6 space-y-4">
             <div>
               <Label htmlFor="email" className="text-[var(--pdcc-body)]">
                 Email
@@ -56,7 +57,7 @@ export default async function LoginPage({
             <Button type="submit" className="w-full">
               Masuk
             </Button>
-          </form>
+          </ServerActionForm>
           <ul className="mt-6 space-y-1 border-t border-[var(--pdcc-border)] pt-4 text-xs text-[var(--pdcc-muted-light)]">
             {db.members.slice(0, 4).map((m) => (
               <li key={m.id}>

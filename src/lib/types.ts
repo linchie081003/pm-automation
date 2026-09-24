@@ -30,7 +30,7 @@ export interface OrganizationMember {
   fullName: string;
   role: MemberRole;
   party: "internal" | "customer";
-  status: "active" | "invited";
+  status: "active" | "invited" | "inactive";
 }
 
 export interface PositionRate {
@@ -74,6 +74,7 @@ export interface TaskTemplate {
   name: string;
   projectType: string;
   methodology: string;
+  isActive: boolean;
   phases: TemplatePhase[];
 }
 
@@ -139,6 +140,14 @@ export interface Project {
   sphImplementationValue?: number;
   sphTrainingValue?: number;
   sphBucketMd?: number;
+  scopeOfWork?: string;
+  nonScopeOfWork?: string;
+  deliveryMethod?: string;
+  preKickoffBackground?: string;
+  preKickoffOrgStructure?: string;
+  preKickoffDeliverables?: string;
+  preKickoffNextActivities?: string;
+  preKickoffApprovedAt?: string;
   poNumber?: string;
   poDate?: string;
   poDueDate?: string;
@@ -147,6 +156,9 @@ export interface Project {
   kickoffActualDate?: string;
   clickupFolderId?: string;
   clickupFolderName?: string;
+  clickupApiToken?: string;
+  clickupWorkspaceId?: string;
+  clickupSpaceId?: string;
   activeBaselineId?: string;
   progressActualPct: number;
   progressPlannedPct: number;
@@ -269,6 +281,12 @@ export interface ClosingItem {
   completed: boolean;
 }
 
+export interface RolePermissionGrant {
+  role: MemberRole;
+  permissionKey: string;
+  allowed: boolean;
+}
+
 export interface PdccDatabase {
   organization: Organization;
   members: OrganizationMember[];
@@ -290,6 +308,7 @@ export interface PdccDatabase {
   notifications: Notification[];
   activities: ProjectActivity[];
   closingChecklist: ClosingItem[];
+  rolePermissionGrants?: RolePermissionGrant[];
   currentUserId: string;
   activeProjectId?: string;
 }

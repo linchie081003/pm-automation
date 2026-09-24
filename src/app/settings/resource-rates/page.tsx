@@ -1,4 +1,6 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { PageHeader } from "@/components/page-header";
+import { SettingsNav } from "@/components/settings-nav";
 import { addPositionRateAction } from "@/lib/actions/settings";
 import { getDb } from "@/lib/data/store";
 import { Button } from "@/components/ui/button";
@@ -19,6 +21,12 @@ export default async function ResourceRatesPage() {
 
   return (
     <AppShell title="Harga Resource per Posisi">
+      <PageHeader
+        eyebrow="Settings"
+        title="Harga resource per posisi"
+        subtitle="Tarif MD per posisi — berlaku ke depan untuk periode baru."
+      />
+      <SettingsNav active="/settings/resource-rates" />
       <p className="mb-4 text-sm text-[var(--pdcc-muted)]">
         Pengaturan organisasi — perubahan harga berlaku ke depan (append-only untuk periode tertutup).
       </p>

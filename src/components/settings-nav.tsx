@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 const links = [
-  { href: "/settings/users", label: "Users" },
+  { href: "/settings/users", label: "User management" },
+  { href: "/settings/roles", label: "Role & permission" },
   { href: "/settings/templates", label: "Templates" },
   { href: "/settings/resource-rates", label: "Resource rates" },
   { href: "/settings/integrations", label: "Integrasi" },
